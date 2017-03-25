@@ -1,0 +1,42 @@
+<html>
+<head>
+    <title>
+        Submarine Game
+    </title>
+    <script type="javascript" src="game.js"></script>
+    <style type="text/css">
+        #gamescreen {
+            width:952px;
+            height:692px;
+            margin-top:16px;
+            margin-left:auto;
+            margin-right:auto;
+            background: url(./images/panel.png) right top no-repeat;
+        }
+        #wrapgame {
+            position: relative;
+        }
+        #field {
+            margin: 0px;
+            border: 0px;
+            border-left:1px solid black;
+            background:#666 url(./images/bg.png);
+            position: absolute;
+            top:26px;
+            right:26px;
+            width:640px;
+            height:640px;
+            overflow:hidden;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<div id="gamescreen">
+    <div id="wrapgame">
+        <div id="field">
+
+        </div>
+    </div>
+</div>
+</body>
+</html>
