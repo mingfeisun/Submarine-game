@@ -25,6 +25,8 @@ var HINT_SETUP = "type 1 - 9 to place a fuel cell," +
 
 var ALERT_OCCUPIED = "This place has already been set!";
 var ALERT_ALREADY_SET = "Your submarine has already been set!";
+var ALERT_PLACE_KEYS = "Only 1-9, o, u, k, ESC are allowed";
+var ALERT_CONTROL_KEYS = "a-->left, w-->up, d-->right, x-->down";
 
 var GridMap = new Array(10);
 for (var i = 0; i < 10; i++){
@@ -49,10 +51,78 @@ function buttonClick() {
         cField.setAttribute("class", "cursorPointer");
         cField.addEventListener("click", fieldClickClear);
     } else {
+
+        playInit();
         CurrentRound = 1;
         CurrentFuel = 10;
+        CurrentUserScore = 0;
+        CurrentComputerScore = 0;
+        updateStatus();
+
         return;
     }
+}
+
+function playInit() {
+    // update button
+    cButton.innerHTML = "STOP";
+
+    // remove all listeners
+    cField.removeAttribute("class");
+    cField.removeEventListener("click", fieldClickClear);
+    cField.removeEventListener("click", fieldClick());
+    cField.removeEventListener("mousemove", fieldMouseOver);
+    window.removeEventListener("keydown", placeObject);
+
+    // remove bordered divs
+    removeBorderDiv();
+
+    // reset SelectedLeft & SelectedTop
+    SelectedLeft = CurrentUserPos[0]*64;
+    SelectedTop = CurrentUserPos[1]*64;
+
+    // show message
+    document.getElementById("start_hint").innerHTML = "Game Starts Now!";
+    setTimeout(function () {
+        document.getElementById("start_hint").innerHTML = "";
+    }, 1500);
+
+    // add listeners for keydown
+    window.addEventListener("keydown", controlSubmarine);
+}
+
+function controlSubmarine(event) {
+    switch (event.key){
+        case "a":
+            updatePosition(-1, 0);
+            break;
+        case "w":
+            updatePosition(0, -1);
+            break;
+        case "d":
+            updatePosition(1, 0);
+            break;
+        case "x":
+            updatePosition(0, 1);
+            break;
+        default:
+            createHintDiv(ALERT_CONTROL_KEYS);
+            setTimeout(function () {
+                createHintDiv("");
+            }, 1500);
+            break;
+    }
+}
+
+function updatePosition(xVal, yVal) {
+    var hasMoved = false;
+}
+
+function updateStatus() {
+    nScoreUser.innerHTML = CurrentUserScore;
+    nScoreComputer.innerHTML = CurrentComputerScore;
+    nRounds.innerHTML = CurrentRound;
+    nRemainingFuel.innerHTML = CurrentFuel
 }
 
 function fieldClickClear() {
@@ -82,7 +152,6 @@ function fieldClick() {
     selectedDiv.style.borderColor = "red";
 
     // create a hint window
-
     createHintDiv(HINT_SETUP);
     window.addEventListener("keydown", fieldConfig);
 }
@@ -160,7 +229,8 @@ function fieldConfig(event) {
                 break;
 
             default:
-                alert("Only key 1-9, o, u, k allowed!");
+                createHintDiv(ALERT_PLACE_KEYS);
+                setTimeout(function () { createHintDiv(HINT_SETUP); }, 2000);
                 break;
         }
     }
@@ -168,14 +238,7 @@ function fieldConfig(event) {
     // Has been processed
     if (hasProcessed){
         // remove hint & selected div
-        var child = document.getElementById("hint");
-        if (child != null ){
-            cField.removeChild(child);
-        }
-        child = document.getElementById("selected");
-        if (child != null ){
-            cField.removeChild(child);
-        }
+        removeBorderDiv();
 
         // remove listener
         window.removeEventListener("keydown", fieldConfig);
@@ -183,6 +246,17 @@ function fieldConfig(event) {
         // add listeners
         cField.addEventListener("mousemove", fieldMouseOver);
         cField.addEventListener("click", fieldClick);
+    }
+}
+
+function removeBorderDiv() {
+    var child = document.getElementById("hint");
+    if (child != null ){
+        cField.removeChild(child);
+    }
+    child = document.getElementById("selected");
+    if (child != null ){
+        cField.removeChild(child);
     }
 }
 
