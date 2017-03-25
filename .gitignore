@@ -1,0 +1,12 @@
+# sketch files
+sketches
+
+# all images
+images
+
+# webstorm project files 
+.idea
+
+# vim files
+*.swp
+*~
