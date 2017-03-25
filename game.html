@@ -1,9 +1,7 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <title>
-        Submarine Game
-    </title>
-    <script type="javascript" src="game.js"></script>
+    <title> Submarine Game </title>
     <style type="text/css">
         #gamescreen {
             width:952px;
@@ -21,22 +19,118 @@
             border: 0px;
             border-left:1px solid black;
             background:#666 url(./images/bg.png);
+            color: #ffffff;
+            font-family: Chalkboard,cursive;
+            font-size: 40px;
             position: absolute;
-            top:26px;
+            top:28px;
             right:26px;
             width:640px;
             height:640px;
             overflow:hidden;
+        }
+        #button {
+            // border:1px solid black;
+            text-align: center;
+            color: #9d74ff;
+            font-family: Chalkboard,cursive;
+            font-size: 30px;
+            position: absolute;
+            top:165px;
+            left:70px;
+            width:150px;
+            height:40px;
             cursor: pointer;
+        }
+        #rounds {
+            // border:1px solid black;
+            text-align: center;
+            color: #ffffff;
+            font-family: Chalkboard,serif;
+            font-size: 40px;
+            position: absolute;
+            top:290px;
+            left:95px;
+            width:110px;
+            height:45px;
+        }
+        #score_user {
+            // border:1px solid black;
+            text-align: center;
+            color: #ffffff;
+            font-family: Chalkboard,serif;
+            font-size: 40px;
+            position: absolute;
+            top:400px;
+            left:45px;
+            width:90px;
+            height:45px;
+        }
+        #score_computer {
+            // border:1px solid black;
+            text-align: center;
+            color: #ffffff;
+            font-family: Chalkboard,serif;
+            font-size: 40px;
+            position: absolute;
+            top:400px;
+            left:170px;
+            width:90px;
+            height:45px;
+        }
+        #remaining_fuel {
+            // border:1px solid black;
+            text-align: center;
+            color: #ffffff;
+            font-family: Chalkboard,serif;
+            font-size: 50px;
+            position: absolute;
+            top:540px;
+            left:115px;
+            width:60px;
+            height:60px;
+        }
+        #start_hint {
+            text-align: center;
+            vertical-align: middle;
+            line-height: 640px;
+        }
+        .cursorPointer {
+            cursor: pointer;
+        }
+        .borderdiv {
+            border:1px solid #ffffff;
+            position: absolute;
+            width: 64px;
+            height: 64px;
+        }
+        .hintdiv {
+            position: absolute;
+            width: 300px;
+            height: 100px;
+            font-family: Chalkboard,monospace;
+            font-size: 20px;
+        }
+        .objectdiv {
+            position: absolute;
+            width: 64px;
+            height: 64px;
         }
     </style>
 </head>
+<body>
 <div id="gamescreen">
     <div id="wrapgame">
+        <div id="button"> </div>
+        <div id="rounds"> </div>
+        <div id="score_user"> </div>
+        <div id="score_computer"> </div>
+        <div id="remaining_fuel"> </div>
         <div id="field">
-
+            <div id="start_hint"></div>
         </div>
     </div>
+    <script type="text/javascript" src="game.js"></script>
 </div>
 </body>
 </html>
