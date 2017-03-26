@@ -1,9 +1,20 @@
+/************************************************************
+ * Elements in HTML
+ ************************************************************/
+
 var cButton = document.getElementById("button");
 var cField = document.getElementById("field");
+var cWrapGame = document.getElementById("wrapgame");
 var nRounds = document.getElementById("rounds");
 var nScoreUser = document.getElementById("score_user");
 var nScoreComputer = document.getElementById("score_computer");
 var nRemainingFuel = document.getElementById("remaining_fuel");
+
+
+
+/************************************************************
+ * The status when playing
+ ************************************************************/
 
 var CurrentKillerPos = [];
 var CurrentUserPos = [];
@@ -12,21 +23,53 @@ var CurrentUserScore = 0;
 var CurrentComputerScore = 0;
 var CurrentRound = 0;
 
+
+
+/************************************************************
+ * The position of selected grid
+ ************************************************************/
+
 var SelectedLeft = 0;
 var SelectedTop = 0;
 
-var OBSTACLE = 1e3;
+
+
+/************************************************************
+ * Definitions for Hint Strings
+ * The Time Durations are also used as the unique ID
+ ************************************************************/
 
 var HINT_SETUP = "type 1 - 9 to place a fuel cell," +
                  "o to place an obstacle, " +
                  "u to place your submarine, " +
                  "k to place a robotic killer, " +
                  "ESC to cancel.";
+var HINT_SETUP_T = 15000;
 
-var ALERT_OCCUPIED = "This place has already been set!";
-var ALERT_ALREADY_SET = "Your submarine has already been set!";
-var ALERT_PLACE_KEYS = "Only 1-9, o, u, k, ESC are allowed";
-var ALERT_CONTROL_KEYS = "a-->left, w-->up, d-->right, x-->down";
+var HINT_OCCUPIED = "This place has already been set!";
+var HINT_OCCUPIED_T = 1501;
+
+var HINT_ALREADY_SET = "Your submarine has already been set!";
+var HINT_ALREADY_SET_T = 1502;
+
+var HINT_PLACE_KEYS = "Only 1-9, o, u, k, ESC are allowed";
+var HINT_PLACE_KEYS_T = 1999;
+
+var HINT_CONTROL_KEYS = "a-->left, w-->up, d-->right, x-->down";
+var HINT_CONTROL_KEYS_T = 2000;
+
+
+
+/************************************************************
+ * GridMap stores the grid status
+ *
+ * 0    means empty
+ * -1   means occupied
+ * 1-9  means fuels
+ * 1000 means obstacle
+ ************************************************************/
+
+var OBSTACLE = 1e3;
 
 var GridMap = new Array(10);
 for (var i = 0; i < 10; i++){
@@ -36,6 +79,13 @@ for (var i = 0; i < 10; i++){
 
 window.document.onload = init();
 
+
+
+/************************************************************
+ * Functions Starts Here
+ ************************************************************/
+
+// system init
 function init() {
     cButton.innerHTML = "START";
     nRounds.innerHTML = "0";
@@ -45,34 +95,35 @@ function init() {
     cButton.addEventListener("click", buttonClick);
 }
 
+// button click callback
 function buttonClick() {
     if (CurrentKillerPos.length == 0 || CurrentUserPos.length == 0) {
-        document.getElementById("start_hint").innerHTML = "Setup first here by clicking!";
-        cField.setAttribute("class", "cursorPointer");
-        cField.addEventListener("click", fieldClickClear);
-    } else {
-
+        showAlert("Setup first here by clicking!", 2000);
+        setupInit();
+    }
+    else {
+        showAlert("Game starts Now!", 1500);
         playInit();
-        CurrentRound = 1;
-        CurrentFuel = 10;
-        CurrentUserScore = 0;
-        CurrentComputerScore = 0;
-        updateStatus();
-
-        return;
     }
 }
 
+// play init
 function playInit() {
     // update button
     cButton.innerHTML = "STOP";
 
+    // update status
+    CurrentRound = 1;
+    CurrentFuel = 10;
+    CurrentUserScore = 0;
+    CurrentComputerScore = 0;
+    updateStatus();
+
     // remove all listeners
     cField.removeAttribute("class");
-    cField.removeEventListener("click", fieldClickClear);
     cField.removeEventListener("click", fieldClick());
     cField.removeEventListener("mousemove", fieldMouseOver);
-    window.removeEventListener("keydown", placeObject);
+    window.removeEventListener("keydown", fieldConfig);
 
     // remove bordered divs
     removeBorderDiv();
@@ -81,16 +132,11 @@ function playInit() {
     SelectedLeft = CurrentUserPos[0]*64;
     SelectedTop = CurrentUserPos[1]*64;
 
-    // show message
-    document.getElementById("start_hint").innerHTML = "Game Starts Now!";
-    setTimeout(function () {
-        document.getElementById("start_hint").innerHTML = "";
-    }, 1500);
-
     // add listeners for keydown
     window.addEventListener("keydown", controlSubmarine);
 }
 
+// user submarine key control
 function controlSubmarine(event) {
     switch (event.key){
         case "a":
@@ -106,18 +152,17 @@ function controlSubmarine(event) {
             updatePosition(0, 1);
             break;
         default:
-            createHintDiv(ALERT_CONTROL_KEYS);
-            setTimeout(function () {
-                createHintDiv("");
-            }, 1500);
+            showHint(HINT_CONTROL_KEYS, HINT_CONTROL_KEYS_T);
             break;
     }
 }
 
+// object move update
 function updatePosition(xVal, yVal) {
     var hasMoved = false;
 }
 
+// update playing info
 function updateStatus() {
     nScoreUser.innerHTML = CurrentUserScore;
     nScoreComputer.innerHTML = CurrentComputerScore;
@@ -125,14 +170,14 @@ function updateStatus() {
     nRemainingFuel.innerHTML = CurrentFuel
 }
 
-function fieldClickClear() {
-    document.getElementById("start_hint").innerHTML = ""; // clear all texts
-    cField.removeEventListener("click", fieldClickClear);
+// setup init
+function setupInit() {
+    cField.setAttribute("class", "cursorPointer");
     cField.addEventListener("click", fieldClick);
     cField.addEventListener("mousemove", fieldMouseOver);
-    return;
 }
 
+// field click callback
 function fieldClick() {
     var selectedDiv = document.getElementById("selected");
 
@@ -141,8 +186,7 @@ function fieldClick() {
 
     // check whether it's already been set
     if (GridMap[SelectedLeft/64][SelectedTop/64] != 0){
-        createHintDiv(ALERT_OCCUPIED);
-        setTimeout(function () { createHintDiv(""); }, 2000);
+        showHint(HINT_OCCUPIED, HINT_OCCUPIED_T);
         return;
     }
 
@@ -152,21 +196,39 @@ function fieldClick() {
     selectedDiv.style.borderColor = "red";
 
     // create a hint window
-    createHintDiv(HINT_SETUP);
+    showHint(HINT_SETUP, HINT_SETUP_T);
     window.addEventListener("keydown", fieldConfig);
 }
 
-function createHintDiv(msg) {
-    var child = document.getElementById("hint");
-    if (child != null ){
-        cField.removeChild(child);
-    }
+// show alert info in the field
+function showAlert(msg, duration) {
+    var alertDiv = document.createElement("DIV");
+    var alertText = document.createTextNode(msg);
+    alertDiv.appendChild(alertText);
+    alertDiv.setAttribute("class", "alerting");
+    alertDiv.setAttribute("id", "alert");
+    cWrapGame.appendChild(alertDiv);
+
+    setTimeout(function () {
+        var alertDiv = document.getElementById("alert");
+        cWrapGame.removeChild(alertDiv);
+    }, duration);
+}
+
+// show hint info over the field
+function showHint(msg, duration){
+    // check existing div and mark it
+    // var child = document.getElementById("hint");
+    // var affixID = "";
+    // if (child != null){
+    //     affixID = duration; // for overlay effect
+    // }
 
     var hintDiv = document.createElement("DIV");
     var hintText = document.createTextNode(msg);
     hintDiv.appendChild(hintText);
     hintDiv.setAttribute("class", "hintdiv");
-    hintDiv.setAttribute("id", "hint");
+    hintDiv.setAttribute("id", "hint"+duration);
 
     var offset = SelectedLeft;
     if (offset + 300 >= 640){
@@ -183,8 +245,14 @@ function createHintDiv(msg) {
     }
     hintDiv.style.top = offset + "px";
     cField.appendChild(hintDiv);
+
+    setTimeout(function () {
+        var hintDiv = document.getElementById("hint"+duration);
+        cField.removeChild(hintDiv);
+    }, duration);
 }
 
+// configure the playing field
 function fieldConfig(event) {
     var hasProcessed = false;
 
@@ -215,8 +283,7 @@ function fieldConfig(event) {
                     hasProcessed = true;
                 }
                 else{
-                    createHintDiv(ALERT_ALREADY_SET);
-                    setTimeout(function () { createHintDiv(HINT_SETUP); }, 2000);
+                    showHint(HINT_ALREADY_SET, HINT_ALREADY_SET_T);
                 }
                 break;
 
@@ -229,8 +296,7 @@ function fieldConfig(event) {
                 break;
 
             default:
-                createHintDiv(ALERT_PLACE_KEYS);
-                setTimeout(function () { createHintDiv(HINT_SETUP); }, 2000);
+                showHint(HINT_PLACE_KEYS, HINT_PLACE_KEYS_T);
                 break;
         }
     }
@@ -249,28 +315,46 @@ function fieldConfig(event) {
     }
 }
 
+// remove alert info div and selected div
 function removeBorderDiv() {
-    var child = document.getElementById("hint");
+    var child = document.getElementById("hint"+HINT_SETUP_T);
     if (child != null ){
         cField.removeChild(child);
     }
+    child = document.getElementById("hint"+HINT_ALREADY_SET_T);
+    if (child != null ){
+        cField.removeChild(child);
+    }
+    child = document.getElementById("hint"+HINT_CONTROL_KEYS_T);
+    if (child != null ){
+        cField.removeChild(child);
+    }
+    child = document.getElementById("hint"+HINT_PLACE_KEYS_T);
+    if (child != null ){
+        cField.removeChild(child);
+    }
+    child = document.getElementById("hint"+HINT_OCCUPIED_T);
+    if (child != null ){
+        cField.removeChild(child);
+    }
+
     child = document.getElementById("selected");
     if (child != null ){
         cField.removeChild(child);
     }
 }
 
+// place objects in the field grid
 function placeObject(obj) {
-    var imgElem = document.createElement("IMG");
-    imgElem.setAttribute("src", "images/"+obj+".png");
     var objectDiv = document.createElement("DIV");
     objectDiv.setAttribute("class", "objectdiv");
     objectDiv.style.left = SelectedLeft + "px";
     objectDiv.style.top = SelectedTop + "px";
-    objectDiv.appendChild(imgElem);
+    objectDiv.style.backgroundImage = "url(images/"+obj+".png";
     cField.appendChild(objectDiv);
 }
 
+// track mouse move and select the grid it belongs to
 function fieldMouseOver(event) {
     var child = document.getElementById("selected");
     if (child != null){

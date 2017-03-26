@@ -19,9 +19,6 @@
             border: 0px;
             border-left:1px solid black;
             background:#666 url(./images/bg.png);
-            color: #ffffff;
-            font-family: Chalkboard,cursive;
-            font-size: 40px;
             position: absolute;
             top:28px;
             right:26px;
@@ -90,9 +87,18 @@
             width:60px;
             height:60px;
         }
-        #start_hint {
+        .alerting {
+            background-color: rgba(49, 47, 35, 0.71);
+            position: absolute;
+            top:28px;
+            right:26px;
             text-align: center;
             vertical-align: middle;
+            width: 640px;
+            height: 640px;
+            color: #ffffff;
+            font-family: Chalkboard,cursive;
+            font-size: 40px;
             line-height: 640px;
         }
         .cursorPointer {
@@ -106,8 +112,10 @@
         }
         .hintdiv {
             position: absolute;
+            background-color: rgba(14, 13, 4, 0.71);
             width: 300px;
             height: 100px;
+            color: #ffffff;
             font-family: Chalkboard,monospace;
             font-size: 20px;
         }
@@ -126,9 +134,7 @@
         <div id="score_user"> </div>
         <div id="score_computer"> </div>
         <div id="remaining_fuel"> </div>
-        <div id="field">
-            <div id="start_hint"></div>
-        </div>
+        <div id="field"></div>
     </div>
     <script type="text/javascript" src="game.js"></script>
 </div>
