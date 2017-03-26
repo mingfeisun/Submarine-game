@@ -423,7 +423,7 @@ function finalOutput(argStr) {
     if (CurrentUserScore > CurrentComputerScore){
         finalRes = "YOU WIN ^o^ !";
     }
-    else if (CurrentUserScore = CurrentComputerScore){
+    else if (CurrentUserScore == CurrentComputerScore){
         finalRes = "Draw !"
     }
     else{
