@@ -411,6 +411,10 @@ function finalOutput(argStr) {
     // game over flag
     IsRunning = 1;
 
+    if (argStr === undefined){
+        argStr = "";
+    }
+
     window.removeEventListener("keydown", controlSubmarine);
 
     cButton.innerHTML = "SETUP";
@@ -570,7 +574,7 @@ function moveKiller(index, startX, startY, offsetX, offsetY) {
             if (targetX == CurrentUserPos[0] && targetY == CurrentUserPos[1]){
                 CurrentComputerScore += 100;
                 updateStatus();
-                finalOutput();
+                finalOutput("Destroyed! ");
                 return;
             }
 
