@@ -56,7 +56,7 @@ var HINT_ALREADY_SET_T = 1502;
 var HINT_PLACE_KEYS = "Only 1-9, o, u, k, ESC are allowed";
 var HINT_PLACE_KEYS_T = 1999;
 
-var HINT_CONTROL_KEYS = "a-->left, w-->up, d-->right, x-->down";
+var HINT_CONTROL_KEYS = "Move with letter a-->left, w-->up, d-->right, x-->down";
 var HINT_CONTROL_KEYS_T = 2000;
 
 var HINT_MOVE_OUT_OF_RANGE = "Out of range! Move fails...";
@@ -64,9 +64,6 @@ var HINT_MOVE_OUT_OF_RANGE_T = 1503;
 
 var HINT_MOVE_TO_OBSTACLE = "Come across obstacles! Move fails...";
 var HINT_MOVE_TO_OBSTACLE_T = 1504;
-
-var HINT_MOVE_TO_KILL = "Kill position! Move fails...";
-var HINT_MOVE_TO_KILL_T = 1505;
 
 var HINT_FUEL_GET1 = "Fuels + ";
 var HINT_FUEL_GET2 = ", Scores + ";
@@ -105,7 +102,7 @@ window.document.onload = init();
 
 // system init
 function init() {
-    cButton.innerHTML = "START";
+    cButton.innerHTML = "SETUP";
     nRounds.innerHTML = "0";
     nScoreUser.innerHTML = "0";
     nScoreComputer.innerHTML = "0";
@@ -116,20 +113,15 @@ function init() {
 // button click callback
 function buttonClick() {
     if (IsRunning < -1) {
-        showAlert("Setup first here by clicking!", 2000);
         setupInit();
     }
     else if(IsRunning < 0) {
-        clearTimeouts();
-        showAlert("Game Starts! Please move your submarine.", 1500);
         playInit();
     }
     else if(IsRunning < 1){
         finalOutput();
     }
     else {
-        clearSettings();
-        showAlert("Setup first here by clicking!", 2000);
         setupInit();
     }
 }
@@ -163,8 +155,15 @@ function playInit() {
     // game running flag
     IsRunning = 0;
 
+    if(!checkSetup()){
+        setupInit(true);
+        return;
+    }
+
+    clearTimeouts();
+
     // update button
-    cButton.innerHTML = "STOP";
+    cButton.innerHTML = "END";
 
     // update status
     CurrentRound = 1;
@@ -186,9 +185,42 @@ function playInit() {
     SelectedLeft = CurrentUserPos[0]*64;
     SelectedTop = CurrentUserPos[1]*64;
 
+    // No fuels, end game
+    if (FuelCount == 0){
+        finalOutput("No fuels! ");
+        return;
+    }
 
+    // No robot killer, end game
+    if (CurrentKillerPos.length < 2){
+        finalOutput("No killers! ");
+        return;
+    }
+
+    showAlert("Game Starts!", 1500);
     // add listeners for keydown
     window.addEventListener("keydown", controlSubmarine);
+}
+
+function checkSetup() {
+    if (CurrentUserPos.length < 2){
+        showAlert("Need your submarine!", 1500);
+        return false;
+    }
+
+    /*
+    if  (CurrentKillerPos.length < 2){
+        showAlert("Need at least one killer!", 1500);
+        return false;
+    }
+
+    if (FuelCount == 0){
+        showAlert("Need at least one fuel cell!", 1500);
+        return false;
+    }
+    */
+
+    return true;
 }
 
 // user submarine key control
@@ -214,6 +246,50 @@ function controlSubmarine(event) {
             window.addEventListener("keydown", controlSubmarine);
             break;
     }
+
+    if (!checkMovability()){
+        finalOutput("No places to move!");
+        return;
+    }
+}
+
+function checkMovability() {
+    var userX = CurrentKillerPos[0];
+    var userY = CurrentKillerPos[1];
+
+    for (var j = -1; j <= 1; j++){
+        if (userX + j < 0 || userY + j > 9 ){
+            continue;
+        }
+        for (var k = -1; k <= 1; k++){
+            if (userX + k < 0 || userY + k > 9 || j*k != 0){
+                continue;
+            }
+            if (GridMap[userX + j][userY + k] >= 0 && GridMap[userX + j][userY + k] < VAL_OBSTACLE){
+                return true;
+            }
+        }
+    }
+    for (var i = 0; i < CurrentKillerPos.length/2; i++){
+        var killerX = CurrentKillerPos[2*i];
+        var killerY = CurrentKillerPos[2*i + 1];
+        for (var j = -1; j <= 1; j++){
+            if (killerX + j < 0 || killerY + j > 9){
+                continue;
+            }
+            for (var k = -1; k <= 1; k++){
+                if (killerX + k < 0 || killerY + k > 9){
+                    continue;
+                }
+                if (GridMap[killerX + j][killerY + k] >= 0 && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE){
+                    return true;
+                }
+            }
+        }
+
+    }
+
+    return false;
 }
 
 // object move update
@@ -224,15 +300,13 @@ function updateUserPosition(xShiftVal, yShiftVal) {
 
     if (estimatedPosX < 0 || estimatedPosX >9 || estimatedPosY < 0 || estimatedPosY > 9){
         showHint(HINT_MOVE_OUT_OF_RANGE, HINT_MOVE_OUT_OF_RANGE_T);
-        // window.addEventListener("keydown", controlSubmarine);
+        updateKillerPosition();
+        window.addEventListener("keydown", controlSubmarine);
     }
     else if (GridMap[estimatedPosX][estimatedPosY] == VAL_OBSTACLE){
         showHint(HINT_MOVE_TO_OBSTACLE, HINT_MOVE_TO_OBSTACLE_T);
-        // window.addEventListener("keydown", controlSubmarine);
-    }
-    else if (GridMap[estimatedPosX][estimatedPosY] == -1){
-        showHint(HINT_MOVE_TO_KILL, HINT_MOVE_TO_KILL_T);
-        // window.addEventListener("keydown", controlSubmarine);
+        updateKillerPosition();
+        window.addEventListener("keydown", controlSubmarine);
     }
     else{
         moveUser(xShiftVal, yShiftVal);
@@ -261,6 +335,7 @@ function moveUser(xVal, yVal) {
         fuelDiv = document.getElementById("fuel"+targetX+targetY);
         fuelDiv.style.opacity = 1;
     }
+    userDiv.style.opacity = 1;
 
     showHint(HINT_FUEL_LOSE, HINT_FUEL_LOSE_T);
     CurrentFuel -= 1;
@@ -278,6 +353,11 @@ function moveUser(xVal, yVal) {
             if (fuelDiv != null && parseFloat(fuelDiv.style.opacity) > 0){
                 fuelDiv.style.opacity = parseFloat(fuelDiv.style.opacity) - offOpa;
             }
+
+            if (GridMap[targetX][targetY] == -1 && userDiv.style.opacity > 0.3){
+                userDiv.style.opacity = parseFloat(userDiv.style.opacity) - offOpa;
+            }
+
             setTimeout(movit, 20);
         }
         else{
@@ -288,6 +368,11 @@ function moveUser(xVal, yVal) {
 
             SelectedLeft = CurrentUserPos[0]*64;
             SelectedTop = CurrentUserPos[1]*64;
+
+            if (GridMap[targetX][targetY] == -1){
+                finalOutput("Destroyed! ");
+                return;
+            }
 
             if (fuelDiv != null){
                 // remove the div
@@ -303,7 +388,7 @@ function moveUser(xVal, yVal) {
                 FuelCount -= 1;
                 if (FuelCount == 0){
                     updateStatus();
-                    finalOutput();
+                    finalOutput("No fuels! ");
                     return;
                 }
             }
@@ -311,7 +396,7 @@ function moveUser(xVal, yVal) {
 
             updateStatus();
             if (CurrentFuel == 0){
-                finalOutput();
+                finalOutput("No fuels! ");
                 return;
             }
 
@@ -322,22 +407,25 @@ function moveUser(xVal, yVal) {
 }
 
 
-function finalOutput() {
+function finalOutput(argStr) {
     // game over flag
     IsRunning = 1;
 
     window.removeEventListener("keydown", controlSubmarine);
 
-    cButton.innerHTML = "START";
+    cButton.innerHTML = "SETUP";
 
     var finalRes = "";
     if (CurrentUserScore > CurrentComputerScore){
-        finalRes = "WIN ^o^ !";
+        finalRes = "YOU WIN ^o^ !";
+    }
+    else if (CurrentUserScore = CurrentComputerScore){
+        finalRes = "Draw !"
     }
     else{
-        finalRes = "LOSE !"
+        finalRes = "You Lose! "
     }
-    showAlert("Game Over! You " + finalRes, 5000);
+    showAlert(argStr + "Game Over! " + finalRes, 5000);
 }
 
 
@@ -439,10 +527,26 @@ function moveKiller(index, startX, startY, offsetX, offsetY) {
     var targetY = (startY + offsetY);
 
     var fuelDiv = null;
+    var addFuel = 0;
+
     if (GridMap[targetX][targetY] > 0 && GridMap[targetX][targetY] < 10){
         fuelDiv = document.getElementById("fuel"+targetX+targetY);
         fuelDiv.style.opacity = 1;
+        addFuel = GridMap[targetX][targetY];
     }
+
+    var userDiv = null;
+    if (GridMap[targetX][targetY] == -2){
+        userDiv = document.getElementById("user");
+        userDiv.style.opacity = 1;
+    }
+
+    CurrentKillerPos[index*2] = targetX;
+    CurrentKillerPos[index*2 + 1] = targetY;
+    killerDiv.setAttribute("id", "killer"+targetX+targetY);
+
+    GridMap[startX][startY] = 0;
+    GridMap[targetX][targetY] = -1;
 
     movit();
 
@@ -456,15 +560,12 @@ function moveKiller(index, startX, startY, offsetX, offsetY) {
             if (fuelDiv != null && parseFloat(fuelDiv.style.opacity) > 0){
                 fuelDiv.style.opacity = parseFloat(fuelDiv.style.opacity) - offOpa;
             }
+            if (userDiv != null && parseFloat(userDiv.style.opacity) > 0.2){
+                userDiv.style.opacity = parseFloat(userDiv.style.opacity) - offOpa;
+            }
             setTimeout(movit, 20);
         }
         else{
-            CurrentKillerPos[index*2] = targetX;
-            CurrentKillerPos[index*2 + 1] = targetY;
-            killerDiv.setAttribute("id", "killer"+targetX+targetY);
-
-
-            CurrentRound += 1;
 
             if (targetX == CurrentUserPos[0] && targetY == CurrentUserPos[1]){
                 CurrentComputerScore += 100;
@@ -478,22 +579,18 @@ function moveKiller(index, startX, startY, offsetX, offsetY) {
                 cField.removeChild(fuelDiv);
 
                 // update the gridmap
-                var addFuel = GridMap[targetX][targetY];
-
                 showHint(HINT_KILLER_SCORE_GET + addFuel, HINT_KILLER_SCORE_GET_T + index, targetX*64, targetY*64);
                 CurrentComputerScore += parseInt(addFuel);
 
                 FuelCount -= 1;
                 if (FuelCount == 0){
                     updateStatus();
-                    finalOutput();
+                    finalOutput("No fuels! ");
                     return;
                 }
             }
 
-            GridMap[startX][startY] = 0;
-            GridMap[targetX][targetY] = -1;
-
+            CurrentRound += 1;
             updateStatus();
         }
     }
@@ -509,9 +606,16 @@ function updateStatus() {
 }
 
 // setup init
-function setupInit() {
+function setupInit(isStarting) {
     // game setup flag
     IsRunning = -1;
+
+    cButton.innerHTML = "START";
+
+    if (isStarting === undefined){
+        showAlert("Setup first here by clicking!", 2000);
+        clearSettings();
+    }
 
     for (var i = 0; i < 10; i++){
         GridMap[i] = new Array(10);
