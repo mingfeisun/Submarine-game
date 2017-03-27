@@ -7,3 +7,9 @@ sketches
 # vim files
 *.swp
 *~
+
+# zip files
+*.zip
+
+# doc report 
+*.docx
