@@ -100,6 +100,11 @@ window.document.onload = init();
  * Functions Starts Here
  ************************************************************/
 
+
+/////////////////////////////////////////////////////////////
+////////////////     System Init         ////////////////////
+/////////////////////////////////////////////////////////////
+
 // system init
 function init() {
     cButton.innerHTML = "SETUP";
@@ -110,44 +115,26 @@ function init() {
     cButton.addEventListener("click", buttonClick);
 }
 
-// button click callback
-function buttonClick() {
-    if (IsRunning < -1) {
-        setupInit();
-    }
-    else if(IsRunning < 0) {
-        playInit();
-    }
-    else if(IsRunning < 1){
-        finalOutput();
-    }
-    else {
-        setupInit();
-    }
-}
+// setup init
+function setupInit(isStarting) {
+    // game setup flag
+    IsRunning = -1;
 
-function clearTimeouts() {
-    // remove all timeouts
-    var highestTimeoutId = setTimeout("null");
-    for (var i = 0 ; i < highestTimeoutId ; i++) {
-        clearTimeout(i);
-    }
-}
+    cButton.innerHTML = "START";
 
-function clearSettings() {
-    while(cField.firstChild){
-        cField.removeChild(cField.firstChild);
+    if (isStarting === undefined){
+        showAlert("Setup first here by clicking!", 2000);
+        clearSettings();
     }
-    CurrentKillerPos = []; // 0-9, 0-9
-    CurrentUserPos = []; // 0-9, 0-9
-    CurrentFuel = 0;
-    CurrentUserScore = 0;
-    CurrentComputerScore = 0;
-    CurrentRound = 0;
-    FuelCount = 0;
 
-    SelectedLeft = 0;
-    SelectedTop = 0;
+    for (var i = 0; i < 10; i++){
+        GridMap[i] = new Array(10);
+        GridMap[i].fill(0);
+    }
+
+    cField.setAttribute("class", "cursorPointer");
+    cField.addEventListener("click", fieldClick);
+    cField.addEventListener("mousemove", fieldMouseOver);
 }
 
 // play init
@@ -202,6 +189,49 @@ function playInit() {
     window.addEventListener("keydown", controlSubmarine);
 }
 
+// clear all timeout to avoid any warnings
+function clearTimeouts() {
+    // remove all timeouts
+    var highestTimeoutId = setTimeout("null");
+    for (var i = 0 ; i < highestTimeoutId ; i++) {
+        clearTimeout(i);
+    }
+}
+
+// clear all settings before setup
+function clearSettings() {
+    while(cField.firstChild){
+        cField.removeChild(cField.firstChild);
+    }
+    CurrentKillerPos = []; // 0-9, 0-9
+    CurrentUserPos = []; // 0-9, 0-9
+    CurrentFuel = 0;
+    CurrentUserScore = 0;
+    CurrentComputerScore = 0;
+    CurrentRound = 0;
+    FuelCount = 0;
+
+    SelectedLeft = 0;
+    SelectedTop = 0;
+}
+
+// button click callback
+function buttonClick() {
+    if (IsRunning < -1) {
+        setupInit();
+    }
+    else if(IsRunning < 0) {
+        playInit();
+    }
+    else if(IsRunning < 1){
+        finalOutput();
+    }
+    else {
+        setupInit();
+    }
+}
+
+// check whether the user has placed the submarine
 function checkSetup() {
     if (CurrentUserPos.length < 2){
         showAlert("Need your submarine!", 1500);
@@ -222,6 +252,55 @@ function checkSetup() {
 
     return true;
 }
+
+// check whether all objects can still move
+function checkMovability() {
+    var userX = CurrentKillerPos[0];
+    var userY = CurrentKillerPos[1];
+
+    for (var j = -1; j <= 1; j++){
+        if (userX + j < 0 || userY + j > 9 ){
+            continue;
+        }
+        for (var k = -1; k <= 1; k++){
+            if (userX + k < 0 || userY + k > 9 || j*k != 0){
+                continue;
+            }
+            if (GridMap[userX + j][userY + k] >= 0
+                && GridMap[userX + j][userY + k] < VAL_OBSTACLE)
+            {
+                return true;
+            }
+        }
+    }
+    for (var i = 0; i < CurrentKillerPos.length/2; i++){
+        var killerX = CurrentKillerPos[2*i];
+        var killerY = CurrentKillerPos[2*i + 1];
+        for (var j = -1; j <= 1; j++){
+            if (killerX + j < 0 || killerY + j > 9){
+                continue;
+            }
+            for (var k = -1; k <= 1; k++){
+                if (killerX + k < 0 || killerY + k > 9){
+                    continue;
+                }
+                if (GridMap[killerX + j][killerY + k] >= 0
+                    && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE)
+                {
+                    return true;
+                }
+            }
+        }
+
+    }
+
+    return false;
+}
+
+
+/////////////////////////////////////////////////////////////
+////////////////    User control         ////////////////////
+/////////////////////////////////////////////////////////////
 
 // user submarine key control
 function controlSubmarine(event) {
@@ -253,58 +332,23 @@ function controlSubmarine(event) {
     }
 }
 
-function checkMovability() {
-    var userX = CurrentKillerPos[0];
-    var userY = CurrentKillerPos[1];
-
-    for (var j = -1; j <= 1; j++){
-        if (userX + j < 0 || userY + j > 9 ){
-            continue;
-        }
-        for (var k = -1; k <= 1; k++){
-            if (userX + k < 0 || userY + k > 9 || j*k != 0){
-                continue;
-            }
-            if (GridMap[userX + j][userY + k] >= 0 && GridMap[userX + j][userY + k] < VAL_OBSTACLE){
-                return true;
-            }
-        }
-    }
-    for (var i = 0; i < CurrentKillerPos.length/2; i++){
-        var killerX = CurrentKillerPos[2*i];
-        var killerY = CurrentKillerPos[2*i + 1];
-        for (var j = -1; j <= 1; j++){
-            if (killerX + j < 0 || killerY + j > 9){
-                continue;
-            }
-            for (var k = -1; k <= 1; k++){
-                if (killerX + k < 0 || killerY + k > 9){
-                    continue;
-                }
-                if (GridMap[killerX + j][killerY + k] >= 0 && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE){
-                    return true;
-                }
-            }
-        }
-
-    }
-
-    return false;
-}
-
 // object move update
 function updateUserPosition(xShiftVal, yShiftVal) {
 
     var estimatedPosX = CurrentUserPos[0] + xShiftVal;
     var estimatedPosY = CurrentUserPos[1] + yShiftVal;
 
-    if (estimatedPosX < 0 || estimatedPosX >9 || estimatedPosY < 0 || estimatedPosY > 9){
+    if (estimatedPosX < 0 || estimatedPosX >9
+        || estimatedPosY < 0 || estimatedPosY > 9)
+    {
         showHint(HINT_MOVE_OUT_OF_RANGE, HINT_MOVE_OUT_OF_RANGE_T);
         updateKillerPosition();
         window.addEventListener("keydown", controlSubmarine);
     }
     else if (GridMap[estimatedPosX][estimatedPosY] == VAL_OBSTACLE){
+
         showHint(HINT_MOVE_TO_OBSTACLE, HINT_MOVE_TO_OBSTACLE_T);
+
         updateKillerPosition();
         window.addEventListener("keydown", controlSubmarine);
     }
@@ -313,6 +357,7 @@ function updateUserPosition(xShiftVal, yShiftVal) {
     }
 }
 
+// move user's submarine to its offset position, (xVal, yVal)
 function moveUser(xVal, yVal) {
     var userDiv = document.getElementById("user");
 
@@ -381,7 +426,9 @@ function moveUser(xVal, yVal) {
                 // update the gridmap
                 var addFuel = GridMap[targetX][targetY];
 
-                showHint(HINT_FUEL_GET1 + addFuel + HINT_FUEL_GET2 + addFuel, HINT_FUEL_GET_T);
+                showHint(HINT_FUEL_GET1 + addFuel + HINT_FUEL_GET2 + addFuel,
+                    HINT_FUEL_GET_T);
+
                 CurrentFuel += parseInt(addFuel);
                 CurrentUserScore += parseInt(addFuel);
 
@@ -407,32 +454,11 @@ function moveUser(xVal, yVal) {
 }
 
 
-function finalOutput(argStr) {
-    // game over flag
-    IsRunning = 1;
+/////////////////////////////////////////////////////////////
+////////////////    Killer control       ////////////////////
+/////////////////////////////////////////////////////////////
 
-    if (argStr === undefined){
-        argStr = "";
-    }
-
-    window.removeEventListener("keydown", controlSubmarine);
-
-    cButton.innerHTML = "SETUP";
-
-    var finalRes = "";
-    if (CurrentUserScore > CurrentComputerScore){
-        finalRes = "YOU WIN ^o^ !";
-    }
-    else if (CurrentUserScore == CurrentComputerScore){
-        finalRes = "Draw !"
-    }
-    else{
-        finalRes = "You Lose! "
-    }
-    showAlert(argStr + "Game Over! " + finalRes, 5000);
-}
-
-
+// killer submarine control
 function updateKillerPosition() {
     for (var i = 0; i < CurrentKillerPos.length/2; i++){
         var killerX = CurrentKillerPos[2*i];
@@ -454,7 +480,9 @@ function updateKillerPosition() {
                 if (killerY + k < 0 || killerY + k > 9){
                     continue;
                 }
-                if (GridMap[killerX + j][killerY + k] >= 0 && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE){
+                if (GridMap[killerX + j][killerY + k] >= 0
+                    && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE)
+                {
                     emptyCount += 1;
                     lastX = j; lastY = k;
                 }
@@ -465,7 +493,9 @@ function updateKillerPosition() {
                     maxFuel = -1;
                     break;
                 }
-                if (GridMap[killerX + j][killerY + k] > maxFuel && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE){
+                if (GridMap[killerX + j][killerY + k] > maxFuel
+                    && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE)
+                {
                     maxFuel = GridMap[killerX + j][killerY + k];
                     offsetX = j;
                     offsetY = k;
@@ -491,7 +521,10 @@ function updateKillerPosition() {
                     if (killerY + k < 0 || killerY + k > 9){
                         continue;
                     }
-                    if (GridMap[killerX + j][killerY + k] >= 0 && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE && Math.random() >= (1- 1/emptyCount)){
+                    if (GridMap[killerX + j][killerY + k] >= 0
+                        && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE
+                        && Math.random() >= (1- 1/emptyCount))
+                    {
                         offsetX = j;
                         offsetY = k;
                         break;
@@ -583,7 +616,10 @@ function moveKiller(index, startX, startY, offsetX, offsetY) {
                 cField.removeChild(fuelDiv);
 
                 // update the gridmap
-                showHint(HINT_KILLER_SCORE_GET + addFuel, HINT_KILLER_SCORE_GET_T + index, targetX*64, targetY*64);
+                showHint(HINT_KILLER_SCORE_GET + addFuel,
+                    HINT_KILLER_SCORE_GET_T + index,
+                    targetX*64, targetY*64);
+
                 CurrentComputerScore += parseInt(addFuel);
 
                 FuelCount -= 1;
@@ -601,57 +637,17 @@ function moveKiller(index, startX, startY, offsetX, offsetY) {
 
 }
 
+
+/////////////////////////////////////////////////////////////
+////////////////    Game status display  ////////////////////
+/////////////////////////////////////////////////////////////
+
 // update playing info
 function updateStatus() {
     nScoreUser.innerHTML = CurrentUserScore;
     nScoreComputer.innerHTML = CurrentComputerScore;
     nRounds.innerHTML = CurrentRound;
     nRemainingFuel.innerHTML = CurrentFuel;
-}
-
-// setup init
-function setupInit(isStarting) {
-    // game setup flag
-    IsRunning = -1;
-
-    cButton.innerHTML = "START";
-
-    if (isStarting === undefined){
-        showAlert("Setup first here by clicking!", 2000);
-        clearSettings();
-    }
-
-    for (var i = 0; i < 10; i++){
-        GridMap[i] = new Array(10);
-        GridMap[i].fill(0);
-    }
-
-    cField.setAttribute("class", "cursorPointer");
-    cField.addEventListener("click", fieldClick);
-    cField.addEventListener("mousemove", fieldMouseOver);
-}
-
-// field click callback
-function fieldClick() {
-    var selectedDiv = document.getElementById("selected");
-
-    SelectedLeft = parseInt(selectedDiv.style.left.split("px")[0]);
-    SelectedTop = parseInt(selectedDiv.style.top.split("px")[0]);
-
-    // check whether it's already been set
-    if (GridMap[SelectedLeft/64][SelectedTop/64] != 0){
-        showHint(HINT_OCCUPIED, HINT_OCCUPIED_T);
-        return;
-    }
-
-    cField.removeEventListener("mousemove", fieldMouseOver);
-    cField.removeEventListener("click", fieldClick);
-
-    selectedDiv.style.borderColor = "red";
-
-    // create a hint window
-    showHint(HINT_SETUP, HINT_SETUP_T);
-    window.addEventListener("keydown", fieldConfig);
 }
 
 // show alert info in the field
@@ -710,6 +706,62 @@ function showHint(msg, duration, xPixel, yPixel){
         cField.removeChild(hintDiv);
     }, duration);
 }
+
+// game over outputs
+function finalOutput(argStr) {
+    // game over flag
+    IsRunning = 1;
+
+    if (argStr === undefined){
+        argStr = "";
+    }
+
+    window.removeEventListener("keydown", controlSubmarine);
+
+    cButton.innerHTML = "SETUP";
+
+    var finalRes = "";
+    if (CurrentUserScore > CurrentComputerScore){
+        finalRes = "YOU WIN ^o^ !";
+    }
+    else if (CurrentUserScore == CurrentComputerScore){
+        finalRes = "Draw !"
+    }
+    else{
+        finalRes = "You Lose! "
+    }
+    showAlert(argStr + "Game Over! " + finalRes, 5000);
+}
+
+
+
+/////////////////////////////////////////////////////////////
+////////////////    Game Field Configuration  ///////////////
+/////////////////////////////////////////////////////////////
+
+// field click callback
+function fieldClick() {
+    var selectedDiv = document.getElementById("selected");
+
+    SelectedLeft = parseInt(selectedDiv.style.left.split("px")[0]);
+    SelectedTop = parseInt(selectedDiv.style.top.split("px")[0]);
+
+    // check whether it's already been set
+    if (GridMap[SelectedLeft/64][SelectedTop/64] != 0){
+        showHint(HINT_OCCUPIED, HINT_OCCUPIED_T);
+        return;
+    }
+
+    cField.removeEventListener("mousemove", fieldMouseOver);
+    cField.removeEventListener("click", fieldClick);
+
+    selectedDiv.style.borderColor = "red";
+
+    // create a hint window
+    showHint(HINT_SETUP, HINT_SETUP_T);
+    window.addEventListener("keydown", fieldConfig);
+}
+
 
 // configure the playing field
 function fieldConfig(event) {
@@ -814,11 +866,15 @@ function placeObject(obj) {
     if (obj == "submarine"){
         objectDiv.setAttribute("id", "user");
     }
-    if (obj == "killer"){
-        objectDiv.setAttribute("id", "killer" + SelectedLeft/64 + SelectedTop/64);
+    if (obj == "killer")
+    {
+        objectDiv.setAttribute("id",
+            "killer" + SelectedLeft/64 + SelectedTop/64);
     }
-    if (obj.split("-")[0] == "fuel"){
-        objectDiv.setAttribute("id", "fuel" + SelectedLeft/64 + SelectedTop/64);
+    if (obj.split("-")[0] == "fuel")
+    {
+        objectDiv.setAttribute("id",
+            "fuel" + SelectedLeft/64 + SelectedTop/64);
     }
     objectDiv.style.left = SelectedLeft + "px";
     objectDiv.style.top = SelectedTop + "px";
@@ -848,3 +904,4 @@ function fieldMouseOver(event) {
     cField.appendChild(borderDiv);
 }
 
+//////////////////  THE END   ///////////////////////////////
