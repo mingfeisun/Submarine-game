@@ -448,6 +448,8 @@ function moveUser(xVal, yVal) {
             }
 
             updateKillerPosition();
+            CurrentRound += 1;
+            updateStatus();
             window.addEventListener("keydown", controlSubmarine);
         }
     }
@@ -512,6 +514,9 @@ function updateKillerPosition() {
         }
 
         // no fuels found, uniformly pick an empty position
+        var randomNum = Math.round(Math.random()*100) % emptyCount + 1;
+        var countTo = 0;
+
         if (offsetX == Infinity || offsetY == Infinity){
             for (var j = -1; j <= 1; j++){
                 if (killerX + j < 0 || killerX + j > 9){
@@ -521,17 +526,15 @@ function updateKillerPosition() {
                     if (killerY + k < 0 || killerY + k > 9){
                         continue;
                     }
-                    if (GridMap[killerX + j][killerY + k] >= 0
-                        && GridMap[killerX + j][killerY + k] < VAL_OBSTACLE
-                        && Math.random() >= (1- 1/emptyCount))
+                    if (GridMap[killerX + j][killerY + k] == 0)
                     {
+                        countTo++;
+                    }
+                    if (countTo == randomNum){
                         offsetX = j;
                         offsetY = k;
                         break;
                     }
-                }
-                if (offsetX != -10 && offsetY != -10){
-                    break;
                 }
             }
         }
@@ -630,7 +633,6 @@ function moveKiller(index, startX, startY, offsetX, offsetY) {
                 }
             }
 
-            CurrentRound += 1;
             updateStatus();
         }
     }
