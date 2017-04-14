@@ -474,6 +474,7 @@ function updateKillerPosition() {
         var emptyCount = 0;
         var lastX = Infinity;
         var lastY = Infinity;
+
         for (var j = -1; j <= 1; j++){
             if (killerX + j < 0 || killerX + j > 9){
                 continue;
@@ -535,6 +536,10 @@ function updateKillerPosition() {
                         offsetY = k;
                         break;
                     }
+                }
+
+                if (offsetX != Infinity && offsetY != Infinity){
+                    break;
                 }
             }
         }
